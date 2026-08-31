@@ -833,7 +833,9 @@ function App() {
             <h1>MCP-MPC</h1>
           </div>
           <p className="header-intro">
-            An MPC is a pad-based sampler for chopping sounds and building beats. Akai’s MPC line reshaped hip-hop and electronic music by making sample-based production fast, tactile, and self-contained.
+            An MPC is a pad-based sampler for chopping sounds and building beats.
+            <br />
+            The MPC reshaped hip-hop and electronic music by making sample-based production fast, tactile, and self-contained.
           </p>
         </div>
         <div className="header-score" aria-label="Session information">
