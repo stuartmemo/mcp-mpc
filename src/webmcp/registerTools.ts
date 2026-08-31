@@ -186,7 +186,7 @@ export async function registerMcpMpcTools(
           kit: {
             type: 'string',
             enum: KIT_IDS,
-            description: 'Factory kit identifier. Lo-Fi Acoustic uses real vintage-mic drum recordings; Dusty Crate is a modeled kit.',
+            description: 'Factory kit identifier. Hip-Hop is the punchy default palette; Traditional is a clean recorded acoustic set; Dusty Crate and Lo-Fi Acoustic are the character palettes.',
           },
         },
         required: ['kit'],

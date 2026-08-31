@@ -144,7 +144,7 @@ function App() {
     }
     if (powerPromise.current) return powerPromise.current;
     setPowering(true);
-    setStatus('LOADING CRATE...');
+    setStatus('LOADING KIT...');
     powerPromise.current = (async () => {
       try {
         await audio.activate();
@@ -1036,7 +1036,7 @@ function App() {
         </section>
 
         <footer className="machine-footer">
-          <span>16 VOICE</span><span>22.05 kHz LO-FI KIT</span><span>WEB AUDIO POWERED</span>
+          <span>16 VOICE</span><span>22.05 kHz SAMPLE SETS</span><span>WEB AUDIO POWERED</span>
           <span className={`webmcp-state webmcp-${webMcpStatus.toLowerCase().replace(' ', '-')}`} title="WebMCP agent control status">
             WEBMCP: {webMcpStatus}
           </span>
@@ -1062,7 +1062,7 @@ function App() {
             <button onClick={() => void powerOn()} disabled={powering}>
               <Power size={18} /> {powering ? 'LOADING SAMPLES...' : 'POWER ON'}
             </button>
-            <small>LOCAL ONLY • NO UPLOADS • TWO SOUND CARTRIDGES</small>
+            <small>LOCAL ONLY • NO UPLOADS • {KITS.length} SOUND CARTRIDGES</small>
           </div>
         </div>
       )}

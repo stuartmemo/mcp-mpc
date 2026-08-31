@@ -15,6 +15,13 @@ const profiles = {
     peak: 0.86,
     room: [[0.028, 0.055], [0.061, 0.032]],
   },
+  hiphop: {
+    seedOffset: 8_000,
+    bitDepth: 14,
+    drive: 2.35,
+    peak: 0.92,
+    room: [[0.021, 0.028]],
+  },
 };
 
 function seededNoise(seed) {
@@ -282,6 +289,48 @@ function makeVinylHit(style) {
   }, modeledOptions(style, { peak: 0.74, room: dusty ? [[0.057, 0.045]] : [[0.031, 0.05], [0.081, 0.025]] }));
 }
 
+function make808Kick() {
+  const clickFilter = highPass(2_400);
+  const bodyFilter = lowPass(1_900);
+  return renderVoice(1.18, profiles.hiphop.seedOffset + 187, (t, _index, noise) => {
+    const sub = Math.sin(sweepPhase(t, 118, 43, 24)) * Math.exp(-t * 3.45);
+    const second = Math.sin(sweepPhase(t, 174, 86, 31)) * Math.exp(-t * 10.5) * 0.19;
+    const click = clickFilter(noise()) * Math.exp(-t * 185) * 0.16;
+    return bodyFilter(sub + second) + click;
+  }, modeledOptions('hiphop', {
+    bitDepth: 16,
+    drive: 1.65,
+    peak: 0.94,
+    room: [],
+  }));
+}
+
+function makeFingerSnap() {
+  const snapFilter = bandPass(1_250, 8_400);
+  return renderVoice(0.42, profiles.hiphop.seedOffset + 198, (t, _index, noise) => {
+    const cracks = burstEnvelope(t, [0, 0.012, 0.027], 155);
+    const body = Math.sin(TAU * 1_720 * t) * Math.exp(-t * 43) * 0.26;
+    return snapFilter(noise()) * cracks * 0.82 + body;
+  }, modeledOptions('hiphop', {
+    peak: 0.78,
+    room: [[0.035, 0.07], [0.083, 0.035]],
+  }));
+}
+
+function makeReverseHit() {
+  const washFilter = bandPass(1_300, 9_600);
+  const duration = 0.92;
+  return renderVoice(duration, profiles.hiphop.seedOffset + 209, (t, _index, noise) => {
+    const rise = Math.min(1, t / 0.72) ** 1.8;
+    const cutoffTail = t < 0.79 ? 1 : Math.exp(-(t - 0.79) * 24);
+    const metal = metallic(t, [[2_813, 0.11], [4_379, 0.09], [6_947, 0.07]]);
+    return (washFilter(noise()) * 0.74 + metal) * rise * cutoffTail;
+  }, modeledOptions('hiphop', {
+    peak: 0.74,
+    room: [],
+  }));
+}
+
 function modeledKit(style) {
   return [
     ['kick.wav', makeKick(style)],
@@ -300,6 +349,27 @@ function modeledKit(style) {
     ['ride.wav', makeRide(style)],
     ['bass-stab.wav', makeBassStab(style)],
     ['vinyl-hit.wav', makeVinylHit(style)],
+  ];
+}
+
+function hipHopKit() {
+  return [
+    ['kick.wav', makeKick('hiphop')],
+    ['snare.wav', makeSnare('hiphop')],
+    ['clap.wav', makeClap('hiphop')],
+    ['closed-hat.wav', makeHat('hiphop', false)],
+    ['open-hat.wav', makeHat('hiphop', true)],
+    ['808-kick.wav', make808Kick()],
+    ['low-perc.wav', makeConga('hiphop')],
+    ['tambourine.wav', makeTambourine('hiphop')],
+    ['rim.wav', makeRim('hiphop')],
+    ['cowbell.wav', makeCowbell('hiphop')],
+    ['shaker.wav', makeShaker('hiphop')],
+    ['snap.wav', makeFingerSnap()],
+    ['crash.wav', makeCrash('hiphop')],
+    ['reverse-hit.wav', makeReverseHit()],
+    ['sub-bass.wav', makeBassStab('hiphop')],
+    ['vinyl-hit.wav', makeVinylHit('hiphop')],
   ];
 }
 
@@ -328,6 +398,7 @@ function writeWav(kitId, filename, samples) {
 
 const kits = [
   ['dusty-crate', modeledKit('dusty')],
+  ['hip-hop', hipHopKit()],
 ];
 
 for (const retiredKitId of ['disco-room', 'pixel-circuit']) {
