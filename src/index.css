@@ -1,0 +1,32 @@
+:root {
+  font-family: 'Press Start 2P', monospace;
+  color: #28283a;
+  background: #171527;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: none;
+}
+
+* { box-sizing: border-box; }
+
+html { min-width: 320px; background: #171527; }
+
+body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
+
+button,
+input,
+select { font: inherit; }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #fff2a6;
+  outline-offset: 3px;
+}
+
+button:disabled,
+select:disabled { cursor: wait; opacity: 0.68; }
+
+::selection { color: #151326; background: #f4b55a; }
