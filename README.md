@@ -45,9 +45,9 @@ The generated app is static and can be deployed on any static host. Microphone r
 
 ## Built-in kits
 
-**Hip-Hop** is the default: punchy kick and snare, a dry clap, tight hats, an 808 kick, sub bass, rim, snap, and transition sounds. **Traditional Kit** is a clean acoustic set with close-miked kick and snare blended with natural mid and overhead microphones, plus toms, expressive hats, ride, and two crashes.
+**Hip-Hop** is the default: real acoustic drum recordings pitched, stacked, shortened, and saturated into a tight boom-bap palette with hard and deep kicks, crack and room snares, crisp hats, toms, and fills. **Traditional Kit** is a clean acoustic set with close-miked kick and snare blended with natural mid and overhead microphones, plus toms, expressive hats, ride, and two crashes.
 
-**Dusty Crate** remains available for warm modeled drums and organic percussion, while **Lo-Fi Acoustic** keeps the softer vintage-mic jazz palette. Hip-Hop and Dusty Crate are original, deterministic 22.05 kHz mono synthesis. Traditional Kit and Lo-Fi Acoustic use real CC0 recordings from [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums), pinned to a specific revision and processed into compact MPC-style one-shots. Full source mappings, mix weights, processing notes, and checksums live in `public/samples/manifest.json`, `public/samples/traditional/PROVENANCE.md`, and `public/samples/lofi-acoustic/PROVENANCE.md`.
+**Dusty Crate** remains available for warm modeled drums and organic percussion, while **Lo-Fi Acoustic** keeps the softer vintage-mic jazz palette. Dusty Crate uses original deterministic 22.05 kHz mono synthesis. Hip-Hop, Traditional Kit, and Lo-Fi Acoustic use real CC0 recordings from [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums), pinned to a specific revision and processed into compact MPC-style one-shots. Full source mappings, mix weights, processing notes, and checksums live in `public/samples/manifest.json` and each recorded kit's `PROVENANCE.md`.
 
 Rebuild all four kits with Node.js and `ffmpeg` available on `PATH`:
 

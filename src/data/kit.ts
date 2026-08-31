@@ -35,22 +35,22 @@ export type KitDefinition = {
 };
 
 const hipHopPads = [
-  ['PUNCH KICK', 'KICK', 'z', 36, 'kick.wav', 'coral'],
+  ['HARD KICK', 'KICK', 'z', 36, 'kick.wav', 'coral'],
   ['CRACK SNARE', 'SNARE', 'x', 38, 'snare.wav', 'coral'],
-  ['DRY CLAP', 'CLAP', 'c', 39, 'clap.wav', 'coral'],
+  ['SNARE STACK', 'STACK', 'c', 39, 'snare-stack.wav', 'coral'],
   ['TIGHT HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral'],
   ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold'],
-  ['808 KICK', '808', 's', 41, '808-kick.wav', 'gold'],
-  ['LOW PERC', 'PERC', 'd', 45, 'low-perc.wav', 'gold'],
-  ['TAMBOURINE', 'TAMB', 'f', 54, 'tambourine.wav', 'gold'],
-  ['RIMSHOT', 'RIM', 'q', 37, 'rim.wav', 'mint'],
-  ['COWBELL', 'COW', 'w', 56, 'cowbell.wav', 'mint'],
-  ['SHAKER', 'SHKR', 'e', 70, 'shaker.wav', 'mint'],
-  ['FINGER SNAP', 'SNAP', 'r', 69, 'snap.wav', 'mint'],
-  ['CRASH', 'CRSH', '1', 49, 'crash.wav', 'violet'],
-  ['REVERSE HIT', 'REV', '2', 52, 'reverse-hit.wav', 'violet'],
-  ['SUB BASS', 'SUB', '3', 35, 'sub-bass.wav', 'violet'],
-  ['VINYL HIT', 'VNYL', '4', 55, 'vinyl-hit.wav', 'violet'],
+  ['DEEP KICK', 'D.KIK', 's', 41, 'deep-kick.wav', 'gold'],
+  ['LOW TOM', 'L.TOM', 'd', 45, 'low-tom.wav', 'gold'],
+  ['PEDAL HAT', 'P.HH', 'f', 54, 'pedal-hat.wav', 'gold'],
+  ['RIM CLICK', 'RIM', 'q', 37, 'rim.wav', 'mint'],
+  ['RIDE BELL', 'BELL', 'w', 56, 'ride-bell.wav', 'mint'],
+  ['HIGH TOM', 'H.TOM', 'e', 70, 'high-tom.wav', 'mint'],
+  ['GHOST SNARE', 'GHST', 'r', 69, 'ghost-snare.wav', 'mint'],
+  ['DARK CRASH', 'CRSH', '1', 49, 'crash.wav', 'violet'],
+  ['SNARE FLAM', 'FLAM', '2', 52, 'snare-flam.wav', 'violet'],
+  ['ROOM KICK', 'R.KIK', '3', 35, 'room-kick.wav', 'violet'],
+  ['ROOM SNARE', 'R.SNR', '4', 55, 'room-snare.wav', 'violet'],
 ] as const satisfies readonly PadDefinition[];
 
 const traditionalPads = [
@@ -115,7 +115,7 @@ export const KITS = [
     id: 'hip-hop',
     name: 'HIP-HOP',
     shortName: 'HIP-HOP',
-    description: 'Punchy kicks, an 808, crack snare, dry clap, tight hats, sub bass, and classic beat-making percussion.',
+    description: 'Real drum recordings pitched, stacked, and saturated into tight boom-bap kicks, snares, hats, and fills.',
     pads: hipHopPads,
   },
   {

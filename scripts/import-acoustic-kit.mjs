@@ -20,9 +20,36 @@ const revision = '9f04cf9a734527edfbb0a4eee1f674e45bbf71bc';
 const repository = 'https://github.com/sfzinstruments/virtuosity_drums';
 const rawBase = `https://raw.githubusercontent.com/sfzinstruments/virtuosity_drums/${revision}`;
 
-const source = (path, gain = 1) => ({ path, gain });
+const source = (path, gain = 1, delaySeconds = 0) => ({ path, gain, delaySeconds });
 
 const recordedKits = [
+  {
+    id: 'hip-hop',
+    title: 'Hip-Hop',
+    micSet: 'close kick/snare, natural mid and overhead microphones, plus selected vintage mono room hits',
+    processing: 'Real acoustic hits pitched and resampled into tight boom-bap one-shots, with focused filtering, moderate saturation, 12/13-bit-style quantization, short tails, and 16-bit mono PCM WAV encoding.',
+    provenanceProcessing: 'onset trim, per-hit pitch resampling, focused high/low-pass filtering, moderate saturation, 12/13-bit-style quantization, MPC-length fades, peak normalization, and 16-bit mono WAV encoding',
+    prepare: prepareHipHopVoice,
+    decodeRate: sourceSampleRate,
+    voices: [
+      { filename: 'kick.wav', sources: [source('Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr3.flac', 0.82), source('Samples/mid/kick/mid_kick_snoff_vl4_rr3.flac', 0.38)], duration: 0.78, peak: 0.94, fade: 0.08, pitch: -2, highPass: 28, lowPass: 7_200, drive: 1.6, bits: 13 },
+      { filename: 'snare.wav', sources: [source('Samples/snaremic/snare/snaremic_snare_center_vl34.flac', 0.78), source('Samples/mid/snare/mid_snare_center_vl34.flac', 0.42)], duration: 0.72, peak: 0.92, fade: 0.1, pitch: -1, highPass: 70, lowPass: 9_800, drive: 1.55, bits: 13 },
+      { filename: 'snare-stack.wav', sources: [source('Samples/snaremic/snare/snaremic_snare_center_vl32.flac', 0.62), source('Samples/snaremic/snare/snaremic_snare_rimshot_vl10.flac', 0.28, 0.012), source('Samples/mid/snare/mid_snare_offcenter_vl30.flac', 0.35, 0.024)], duration: 0.82, peak: 0.91, fade: 0.12, pitch: -1, highPass: 75, lowPass: 9_200, drive: 1.7, bits: 13 },
+      { filename: 'closed-hat.wav', sources: [source('Samples/oh/hh/oh_hh_closed_vl4_rr3.flac')], duration: 0.26, peak: 0.63, fade: 0.05, pitch: -1, highPass: 380, lowPass: 10_500, drive: 1.35, bits: 13 },
+      { filename: 'open-hat.wav', sources: [source('Samples/oh/hh/oh_hh_open_vl4_rr1.flac')], duration: 0.82, peak: 0.68, fade: 0.16, pitch: -2, highPass: 300, lowPass: 10_000, drive: 1.35, bits: 13 },
+      { filename: 'deep-kick.wav', sources: [source('Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr1.flac', 0.84), source('Samples/mid/kick/mid_kick_snoff_vl4_rr1.flac', 0.35)], duration: 1.1, peak: 0.94, fade: 0.16, pitch: -5, highPass: 25, lowPass: 5_500, drive: 1.75, bits: 13 },
+      { filename: 'low-tom.wav', sources: [source('Samples/mid/ltom/mid_ltom_center_vl15.flac')], duration: 0.82, peak: 0.84, fade: 0.12, pitch: -4, highPass: 35, lowPass: 7_200, drive: 1.55, bits: 13 },
+      { filename: 'pedal-hat.wav', sources: [source('Samples/oh/hh/oh_hh_pedal_vl3_rr4.flac')], duration: 0.32, peak: 0.58, fade: 0.06, pitch: -1, highPass: 400, lowPass: 10_500, drive: 1.35, bits: 13 },
+      { filename: 'rim.wav', sources: [source('Samples/snaremic/snare/snaremic_snare_rimshot_vl10.flac', 0.82), source('Samples/mid/snare/mid_snare_rimshot_vl10.flac', 0.3)], duration: 0.38, peak: 0.78, fade: 0.06, pitch: -1, highPass: 120, lowPass: 9_000, drive: 1.5, bits: 13 },
+      { filename: 'ride-bell.wav', sources: [source('Samples/oh/ride/oh_ride_bell_vl3_rr3.flac')], duration: 0.72, peak: 0.7, fade: 0.14, pitch: -3, highPass: 180, lowPass: 9_500, drive: 1.45, bits: 13 },
+      { filename: 'high-tom.wav', sources: [source('Samples/mid/htom/mid_htom_offcenter_vl15.flac')], duration: 0.72, peak: 0.82, fade: 0.1, pitch: -2, highPass: 45, lowPass: 8_000, drive: 1.5, bits: 13 },
+      { filename: 'ghost-snare.wav', sources: [source('Samples/snaremic/snare/snaremic_snare_offcenter_vl12.flac', 0.75), source('Samples/mid/snare/mid_snare_offcenter_vl12.flac', 0.4)], duration: 0.48, peak: 0.56, fade: 0.08, pitch: -1, highPass: 70, lowPass: 9_200, drive: 1.4, bits: 13 },
+      { filename: 'crash.wav', sources: [source('Samples/oh/crash/oh_crash_crash_vl3_rr4.flac')], duration: 1.8, peak: 0.67, fade: 0.38, pitch: -3, highPass: 100, lowPass: 8_500, drive: 1.35, bits: 13 },
+      { filename: 'snare-flam.wav', sources: [source('Samples/snaremic/snare/snaremic_snare_flam_vl12.flac', 0.76), source('Samples/mid/snare/mid_snare_flam_vl12.flac', 0.42)], duration: 0.9, peak: 0.88, fade: 0.14, pitch: -1, highPass: 70, lowPass: 9_500, drive: 1.55, bits: 13 },
+      { filename: 'room-kick.wav', sources: [source('Samples/lofi/kick/lofi_kick_snon_vl3_rr2.flac')], duration: 0.92, peak: 0.86, fade: 0.14, pitch: -3, highPass: 25, lowPass: 6_000, drive: 1.7, bits: 12 },
+      { filename: 'room-snare.wav', sources: [source('Samples/lofi/snare/lofi_snare_center_vl24.flac')], duration: 0.88, peak: 0.86, fade: 0.14, pitch: -2, highPass: 60, lowPass: 7_800, drive: 1.7, bits: 12 },
+    ],
+  },
   {
     id: 'lofi-acoustic',
     title: 'Lo-Fi Acoustic',
@@ -100,15 +127,18 @@ function decodeFlac(path, targetRate) {
   return samples;
 }
 
-function mixSources(layers) {
-  if (layers.length === 1 && layers[0].gain === 1) return layers[0].samples;
-  const length = Math.max(...layers.map(({ samples }) => samples.length));
+function mixSources(layers, inputRate) {
+  if (layers.length === 1 && layers[0].gain === 1 && layers[0].delaySeconds === 0) return layers[0].samples;
+  const length = Math.max(...layers.map(({ samples, delaySeconds }) => (
+    samples.length + Math.round(delaySeconds * inputRate)
+  )));
   const mixed = new Float32Array(length);
   const gainTotal = layers.reduce((total, layer) => total + layer.gain, 0);
-  for (const { samples, gain } of layers) {
+  for (const { samples, gain, delaySeconds } of layers) {
     const normalizedGain = gain / gainTotal;
+    const delaySamples = Math.round(delaySeconds * inputRate);
     for (let index = 0; index < samples.length; index += 1) {
-      mixed[index] += samples[index] * normalizedGain;
+      mixed[index + delaySamples] += samples[index] * normalizedGain;
     }
   }
   return mixed;
@@ -176,6 +206,50 @@ function prepareLoFiVoice(sourceSamples, { duration, peak: targetPeak, fade }) {
   return resampled;
 }
 
+function prepareHipHopVoice(sourceSamples, {
+  duration,
+  peak: targetPeak,
+  fade,
+  pitch = 0,
+  highPass = 30,
+  lowPass = 9_500,
+  drive = 1.5,
+  bits = 13,
+}) {
+  const trimmed = trimToOnset(sourceSamples, duration, sourceSampleRate, 0.014, 0.006);
+  const filtered = new Float32Array(trimmed.length);
+  const highCoefficient = 1 - Math.exp(-Math.PI * 2 * highPass / sourceSampleRate);
+  const lowCoefficient = 1 - Math.exp(-Math.PI * 2 * lowPass / sourceSampleRate);
+  const driveScale = Math.tanh(drive);
+  let subState = 0;
+  let lowState = 0;
+  for (let index = 0; index < trimmed.length; index += 1) {
+    subState += highCoefficient * (trimmed[index] - subState);
+    const highPassed = trimmed[index] - subState;
+    lowState += lowCoefficient * (highPassed - lowState);
+    filtered[index] = Math.tanh(lowState * drive) / driveScale;
+  }
+
+  const pitchRatio = 2 ** (pitch / 12);
+  const step = sourceSampleRate * pitchRatio / sampleRate;
+  const outputLength = Math.max(1, Math.floor(filtered.length / step));
+  const resampled = new Float32Array(outputLength);
+  for (let index = 0; index < outputLength; index += 1) {
+    const position = index * step;
+    const before = Math.floor(position);
+    const after = Math.min(filtered.length - 1, before + 1);
+    const fraction = position - before;
+    resampled[index] = filtered[before] * (1 - fraction) + filtered[after] * fraction;
+  }
+
+  addFadesAndNormalize(resampled, targetPeak, fade);
+  const quantizer = 2 ** (bits - 1);
+  for (let index = 0; index < resampled.length; index += 1) {
+    resampled[index] = Math.round(resampled[index] * quantizer) / quantizer;
+  }
+  return resampled;
+}
+
 function prepareTraditionalVoice(sourceSamples, { duration, peak: targetPeak, fade }) {
   const trimmed = trimToOnset(sourceSamples, duration, sampleRate, 0.012, 0.005);
   const highPassed = new Float32Array(trimmed.length);
@@ -235,14 +309,19 @@ try {
         layers.push({
           samples: decodeFlac(downloadCache.get(layer.path), kit.decodeRate),
           gain: layer.gain,
+          delaySeconds: layer.delaySeconds,
         });
       }
 
-      const buffer = wavBuffer(kit.prepare(mixSources(layers), voice));
+      const buffer = wavBuffer(kit.prepare(mixSources(layers, kit.decodeRate), voice));
       writeFileSync(join(output, voice.filename), buffer);
       processed.push({
         file: voice.filename,
-        sourceFiles: voice.sources.map((layer) => ({ path: layer.path, gain: layer.gain })),
+        sourceFiles: voice.sources.map((layer) => ({
+          path: layer.path,
+          gain: layer.gain,
+          ...(layer.delaySeconds > 0 ? { delaySeconds: layer.delaySeconds } : {}),
+        })),
         sha256: createHash('sha256').update(buffer).digest('hex'),
       });
     }
@@ -262,7 +341,10 @@ try {
       '| Output | Source recording(s) and mix gain | SHA-256 |',
       '| --- | --- | --- |',
       ...processed.map((item) => {
-        const sources = item.sourceFiles.map((layer) => `\`${layer.path}\` at ${layer.gain}`).join('<br>');
+        const sources = item.sourceFiles.map((layer) => {
+          const delay = layer.delaySeconds ? ` after ${Math.round(layer.delaySeconds * 1_000)} ms` : '';
+          return `\`${layer.path}\` at ${layer.gain}${delay}`;
+        }).join('<br>');
         return `| \`${item.file}\` | ${sources} | \`${item.sha256}\` |`;
       }),
       '',

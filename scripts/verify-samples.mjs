@@ -14,6 +14,11 @@ assert.deepEqual(
   expectedKitIds,
   'Sample manifest kit order or membership does not match the app.',
 );
+assert.equal(
+  manifest.kits.find((kit) => kit.id === 'hip-hop')?.kind,
+  'recorded',
+  'Hip-Hop must remain a recorded, sample-based kit.',
+);
 
 let verifiedFiles = 0;
 for (const kit of manifest.kits) {
