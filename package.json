@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && vite build --config vite.worker.config.ts",
+    "build": "tsc -b && vite build",
     "generate:samples": "node scripts/generate-samples.mjs && node scripts/import-acoustic-kit.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -19,6 +19,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.37.1",
     "@openai/sites-vite-plugin": "^0.2.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
@@ -27,6 +28,7 @@
     "oxlint": "^1.79.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
-    "webmcp-types": "^0.1.5"
+    "webmcp-types": "^0.1.5",
+    "wrangler": "^4.92.0"
   }
 }
