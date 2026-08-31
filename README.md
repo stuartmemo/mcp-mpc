@@ -1,6 +1,6 @@
 # MCP MPC
 
-A local-first, SNES-inspired web sampling workstation. MCP MPC runs entirely in the browser with the Web Audio API: no account, server, or sample upload is required.
+A local-first, SNES-inspired web sampling workstation. Built for the WebMCP Challenge, MCP MPC runs entirely in the browser with the Web Audio API: no account, server, or sample upload is required.
 
 ## Features
 
