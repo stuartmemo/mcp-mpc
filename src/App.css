@@ -254,7 +254,7 @@
     linear-gradient(135deg, var(--lcd) 50%, transparent 50%) calc(100% - 7px) 11px / 5px 5px no-repeat,
     var(--lcd-deep);
   box-shadow: inset 2px 2px 0 #080d17;
-  font-size: 6px;
+  font-size: 10px;
   cursor: pointer;
 }
 
