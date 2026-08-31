@@ -11,6 +11,7 @@ export type PadConfig = {
   bufferId: string;
   url: string;
   pitch: number;
+  volume: number;
   sliceStart: number;
   sliceEnd: number;
   color: PadColor;
@@ -165,6 +166,7 @@ export const createFactoryKit = (kitId: KitId = DEFAULT_KIT_ID): PadConfig[] => 
     bufferId: `factory-${kit.id}-${index}`,
     url: `${samplesBase}/${kit.id}/${definition[4]}`,
     pitch: 0,
+    volume: 100,
     sliceStart: 0,
     sliceEnd: 1,
     color: definition[5],

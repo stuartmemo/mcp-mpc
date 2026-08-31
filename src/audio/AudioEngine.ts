@@ -1,6 +1,7 @@
 export type PlayablePad = {
   bufferId: string;
   pitch: number;
+  volume: number;
   sliceStart: number;
   sliceEnd: number;
 };
@@ -80,13 +81,16 @@ export class AudioEngine {
     const buffer = this.buffers.get(pad.bufferId);
     if (!context || !compressor || !buffer) return false;
 
+    const level = Math.max(0, Math.min(1.15, velocity)) * Math.max(0, Math.min(1, pad.volume / 100));
+    if (level === 0) return false;
+
     const source = context.createBufferSource();
     const gain = context.createGain();
     const start = Math.max(0, Math.min(0.999, pad.sliceStart)) * buffer.duration;
     const end = Math.max(pad.sliceStart + 0.001, Math.min(1, pad.sliceEnd)) * buffer.duration;
     source.buffer = buffer;
     source.playbackRate.value = 2 ** (pad.pitch / 12);
-    gain.gain.setValueAtTime(Math.max(0.04, Math.min(1.15, velocity)), when);
+    gain.gain.setValueAtTime(level, when);
     gain.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.04, (end - start) / source.playbackRate.value));
     source.connect(gain).connect(compressor);
     source.start(when, start, end - start);

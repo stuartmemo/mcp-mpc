@@ -4,6 +4,7 @@ import {
   Circle,
   Download,
   FileMusic,
+  Link2,
   Mic,
   Play,
   Power,
@@ -37,7 +38,7 @@ import './App.css';
 
 const STEPS = 16;
 const PAD_COUNT = 16;
-const DEFAULT_PAD_VOLUME = 88;
+const DEFAULT_MASTER_VOLUME = 88;
 
 type Pattern = boolean[][];
 
@@ -54,6 +55,33 @@ function makeStarterPattern(): Pattern {
 const clonePattern = (pattern: Pattern) => pattern.map((row) => [...row]);
 
 const timeLabel = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+
+const resolveSampleUrl = (rawUrl: string) => {
+  const trimmedUrl = rawUrl.trim();
+  if (!trimmedUrl) throw new Error('Enter a direct audio file URL.');
+
+  const resolved = new URL(trimmedUrl, window.location.href);
+  const isAudioDataUrl = resolved.protocol === 'data:' && /^data:audio\//i.test(trimmedUrl);
+  const isAllowed = resolved.protocol === 'https:'
+    || (resolved.protocol === 'http:' && resolved.origin === window.location.origin)
+    || resolved.protocol === 'blob:'
+    || isAudioDataUrl;
+  if (!isAllowed) {
+    throw new Error('Sample URL must be HTTPS, same-origin HTTP, a blob URL, or an audio data URL.');
+  }
+  return resolved.href;
+};
+
+const inferSampleName = (resolvedUrl: string, padIndex: number) => {
+  try {
+    const parsedUrl = new URL(resolvedUrl);
+    if (parsedUrl.protocol === 'data:') return `SAMPLE ${padIndex + 1}`;
+    const fileName = decodeURIComponent(parsedUrl.pathname.split('/').pop() ?? '');
+    return fileName.replace(/\.[^.]+$/, '').slice(0, 24).toUpperCase() || `SAMPLE ${padIndex + 1}`;
+  } catch {
+    return `SAMPLE ${padIndex + 1}`;
+  }
+};
 
 function App() {
   const audio = useMemo(() => new AudioEngine(), []);
@@ -82,8 +110,8 @@ function App() {
   const bpmRef = useRef(bpm);
   const [swing, setSwing] = useState(12);
   const swingRef = useRef(swing);
-  const [padVolume, setPadVolume] = useState(DEFAULT_PAD_VOLUME);
-  const padVolumeRef = useRef(padVolume);
+  const [masterVolume, setMasterVolume] = useState(DEFAULT_MASTER_VOLUME);
+  const masterVolumeRef = useRef(masterVolume);
   const [chopCount, setChopCount] = useState(4);
   const chopCountRef = useRef(chopCount);
   const [status, setStatus] = useState('INSERT COIN / POWER ON');
@@ -92,6 +120,8 @@ function App() {
   );
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
+  const [sampleUrl, setSampleUrl] = useState('');
+  const [urlLoading, setUrlLoading] = useState(false);
   const recordSecondsRef = useRef(0);
   const [meter, setMeter] = useState([2, 4, 1, 3, 2, 1, 0, 0]);
   const audioInputRef = useRef<HTMLInputElement>(null);
@@ -127,10 +157,10 @@ function App() {
     setPattern(next);
   }, []);
 
-  const commitPadVolume = useCallback((nextVolume: number) => {
+  const commitMasterVolume = useCallback((nextVolume: number) => {
     const clamped = Math.round(Math.max(0, Math.min(100, nextVolume)));
-    padVolumeRef.current = clamped;
-    setPadVolume(clamped);
+    masterVolumeRef.current = clamped;
+    setMasterVolume(clamped);
     audio.setOutputLevel(clamped / 100);
   }, [audio]);
 
@@ -337,6 +367,14 @@ function App() {
     setStatus(`TUNE ${pitch > 0 ? '+' : ''}${pitch} ST / PAD ${String(selectedPad + 1).padStart(2, '0')}`);
   };
 
+  const changeSelectedPadVolume = (nextVolume: number) => {
+    const volume = Math.round(Math.max(0, Math.min(100, nextVolume)));
+    updateSelectedPad({ volume });
+    setStatus(volume === 0
+      ? `PAD ${String(selectedPad + 1).padStart(2, '0')} MUTED`
+      : `PAD ${String(selectedPad + 1).padStart(2, '0')} LEVEL / ${volume}%`);
+  };
+
   const toggleStep = (padIndex: number, step: number) => {
     const next = clonePattern(patternRef.current);
     next[padIndex][step] = !next[padIndex][step];
@@ -392,6 +430,57 @@ function App() {
     const file = event.target.files?.[0];
     if (file) void loadAudioFile(file);
     event.target.value = '';
+  };
+
+  const loadAudioUrl = useCallback(async (
+    padIndex: number,
+    rawUrl: string,
+    options: { name?: string; shortName?: string; signal?: AbortSignal } = {},
+  ) => {
+    await powerOn();
+    const resolvedUrl = resolveSampleUrl(rawUrl);
+    const bufferId = `url-${Date.now()}-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+    await audio.loadUrl(bufferId, resolvedUrl, options.signal);
+
+    const inferredName = inferSampleName(resolvedUrl, padIndex);
+    const displayName = (options.name ?? inferredName).slice(0, 24).toUpperCase();
+    const displayShortName = (options.shortName ?? displayName.slice(0, 6)).slice(0, 6).toUpperCase();
+    const next = padsRef.current.map((current, index) => index === padIndex ? {
+      ...current,
+      bufferId,
+      url: resolvedUrl,
+      name: displayName,
+      shortName: displayShortName,
+      pitch: 0,
+      sliceStart: 0,
+      sliceEnd: 1,
+      source: 'sample' as const,
+    } : current);
+    commitPads(next);
+    selectedPadRef.current = padIndex;
+    setSelectedPad(padIndex);
+    poweredRef.current = true;
+    setPowered(true);
+    return displayName;
+  }, [audio, commitPads, powerOn]);
+
+  const handleSampleUrlSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const padIndex = selectedPadRef.current;
+    setUrlLoading(true);
+    setStatus(`FETCHING URL / PAD ${padIndex + 1}`);
+    try {
+      const displayName = await loadAudioUrl(padIndex, sampleUrl);
+      setSampleUrl('');
+      setStatus(`URL ${displayName} → PAD ${padIndex + 1}`);
+    } catch (error) {
+      console.error(error);
+      setStatus(error instanceof Error && error.message.startsWith('Sample URL must')
+        ? 'URL MUST BE HTTPS OR SAME-ORIGIN'
+        : 'URL LOAD FAILED / CHECK CORS + FORMAT');
+    } finally {
+      setUrlLoading(false);
+    }
   };
 
   const toggleMicRecording = async () => {
@@ -466,6 +555,7 @@ function App() {
         name: `CHOP ${chop + 1}`,
         shortName: `C${chop + 1}`,
         pitch: selected.pitch,
+        volume: selected.volume,
         sliceStart: baseStart + usable * (chop / chopCount),
         sliceEnd: baseStart + usable * ((chop + 1) / chopCount),
         source: 'chop',
@@ -540,19 +630,6 @@ function App() {
       setPowered(true);
     };
 
-    const safeSampleUrl = (rawUrl: string) => {
-      const resolved = new URL(rawUrl, window.location.href);
-      const isAudioDataUrl = resolved.protocol === 'data:' && /^data:audio\//i.test(rawUrl);
-      const isAllowed = resolved.protocol === 'https:'
-        || (resolved.protocol === 'http:' && resolved.origin === window.location.origin)
-        || resolved.protocol === 'blob:'
-        || isAudioDataUrl;
-      if (!isAllowed) {
-        throw new Error('Sample URL must be HTTPS, same-origin HTTP, a blob URL, or an audio data URL.');
-      }
-      return resolved.href;
-    };
-
     const ensurePadBuffer = async (padIndex: number, signal: AbortSignal) => {
       const pad = padsRef.current[padIndex];
       if (!pad) throw new Error(`Pad ${padIndex + 1} does not exist.`);
@@ -579,7 +656,7 @@ function App() {
         description: kit.description,
       })),
       output: {
-        volumePercent: padVolumeRef.current,
+        volumePercent: masterVolumeRef.current,
       },
       transport: {
         playing: playingRef.current,
@@ -596,6 +673,7 @@ function App() {
           shortName: pad.shortName,
           source: pad.source,
           pitch: pad.pitch,
+          volumePercent: pad.volume,
           sliceStart: pad.sliceStart,
           sliceEnd: pad.sliceEnd,
           loaded: Boolean(buffer),
@@ -621,36 +699,9 @@ function App() {
       },
 
       loadSample: async ({ pad, url, name, shortName }, signal) => {
-        await powerOn();
-        const resolvedUrl = safeSampleUrl(url);
-        const bufferId = `webmcp-${Date.now()}-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
         setStatus(`WEBMCP / LOADING PAD ${pad}`);
-        await audio.loadUrl(bufferId, resolvedUrl, signal);
-        const pathPart = (() => {
-          try {
-            return decodeURIComponent(new URL(resolvedUrl).pathname.split('/').pop() ?? '');
-          } catch {
-            return '';
-          }
-        })();
-        const inferredName = pathPart.replace(/\.[^.]+$/, '').slice(0, 24).toUpperCase() || `SAMPLE ${pad}`;
-        const displayName = (name ?? inferredName).slice(0, 24).toUpperCase();
-        const displayShortName = (shortName ?? displayName.slice(0, 6)).slice(0, 6).toUpperCase();
         const padIndex = pad - 1;
-        const next = padsRef.current.map((current, index) => index === padIndex ? {
-          ...current,
-          bufferId,
-          url: resolvedUrl,
-          name: displayName,
-          shortName: displayShortName,
-          pitch: 0,
-          sliceStart: 0,
-          sliceEnd: 1,
-          source: 'sample' as const,
-        } : current);
-        commitPads(next);
-        selectedPadNow(padIndex);
-        setPoweredNow();
+        const displayName = await loadAudioUrl(padIndex, url, { name, shortName, signal });
         setStatus(`WEBMCP / ${displayName} → PAD ${pad}`);
         return stateSnapshot();
       },
@@ -666,6 +717,7 @@ function App() {
           name: source.name,
           shortName: source.shortName,
           pitch: source.pitch,
+          volume: source.volume,
           sliceStart: source.sliceStart,
           sliceEnd: source.sliceEnd,
           source: source.source,
@@ -677,7 +729,7 @@ function App() {
         return stateSnapshot();
       },
 
-      configurePad: ({ pad, pitch, sliceStart, sliceEnd, name, shortName }) => {
+      configurePad: ({ pad, pitch, volume, sliceStart, sliceEnd, name, shortName }) => {
         const padIndex = pad - 1;
         const current = padsRef.current[padIndex];
         if (!current) throw new Error(`Pad ${pad} does not exist.`);
@@ -687,6 +739,7 @@ function App() {
         const next = padsRef.current.map((candidate, index) => index === padIndex ? {
           ...candidate,
           ...(pitch === undefined ? {} : { pitch }),
+          ...(volume === undefined ? {} : { volume }),
           ...(sliceStart === undefined ? {} : { sliceStart }),
           ...(sliceEnd === undefined ? {} : { sliceEnd }),
           ...(name === undefined ? {} : { name: name.toUpperCase() }),
@@ -716,6 +769,7 @@ function App() {
             name: `CHOP ${chop + 1}`,
             shortName: `C${chop + 1}`,
             pitch: source.pitch,
+            volume: source.volume,
             sliceStart: start + duration * (chop / count),
             sliceEnd: start + duration * ((chop + 1) / count),
             source: 'chop',
@@ -761,8 +815,8 @@ function App() {
       },
 
       setVolume: ({ volume }) => {
-        commitPadVolume(volume);
-        setStatus(volume === 0 ? 'WEBMCP / PAD OUTPUT MUTED' : `WEBMCP / PAD LEVEL ${Math.round(volume)}%`);
+        commitMasterVolume(volume);
+        setStatus(volume === 0 ? 'WEBMCP / MASTER MUTED' : `WEBMCP / MASTER LEVEL ${Math.round(volume)}%`);
         return stateSnapshot();
       },
 
@@ -784,7 +838,7 @@ function App() {
         return stateSnapshot();
       },
     };
-  }, [audio, commitPadVolume, commitPads, commitPattern, powerOn, selectFactoryKit]);
+  }, [audio, commitMasterVolume, commitPads, commitPattern, loadAudioUrl, powerOn, selectFactoryKit]);
 
   useEffect(() => {
     const modelContext = document.modelContext;
@@ -868,30 +922,27 @@ function App() {
             </div>
             <small id="factory-kit-description">{kitLoading ? 'LOADING CARTRIDGE...' : activeKit.description}</small>
           </div>
-          <label className="master-level" htmlFor="pad-volume">
-            <span className="master-level-heading"><Volume2 size={14} /> PAD LEVEL</span>
+          <label className="master-level" htmlFor="master-volume">
+            <span className="master-level-heading"><Volume2 size={14} /> MASTER OUT</span>
             <span className="master-level-row">
               <input
-                id="pad-volume"
+                id="master-volume"
                 type="range"
                 min="0"
                 max="100"
                 step="1"
-                value={padVolume}
-                aria-label="Pad and sample output volume"
-                aria-valuetext={padVolume === 0 ? 'Muted' : `${padVolume} percent`}
+                value={masterVolume}
+                aria-label="Master output volume"
+                aria-valuetext={masterVolume === 0 ? 'Muted' : `${masterVolume} percent`}
                 onChange={(event) => {
                   const nextVolume = Number(event.target.value);
-                  commitPadVolume(nextVolume);
-                  setStatus(nextVolume === 0 ? 'PAD OUTPUT MUTED' : `PAD LEVEL / ${nextVolume}%`);
+                  commitMasterVolume(nextVolume);
+                  setStatus(nextVolume === 0 ? 'MASTER OUTPUT MUTED' : `MASTER OUT / ${nextVolume}%`);
                 }}
               />
-              <output htmlFor="pad-volume">{String(padVolume).padStart(3, '0')}%</output>
+              <output htmlFor="master-volume">{String(masterVolume).padStart(3, '0')}%</output>
             </span>
           </label>
-          <button className={`power-switch ${powered ? 'on' : ''}`} onClick={() => void powerOn()} disabled={powering}>
-            <Power size={17} /> {powering ? 'BOOT' : powered ? 'ON' : 'POWER'}
-          </button>
         </div>
 
         <div className="control-deck">
@@ -915,6 +966,31 @@ function App() {
                 <div className="lcd-status"><span className="status-dot" /> {status}</div>
               </div>
             </div>
+
+            <section className={`pad-volume-panel ${selected.color}`} aria-labelledby="selected-pad-volume-title">
+              <div className="pad-volume-identity">
+                <span id="selected-pad-volume-title">SELECTED PAD LEVEL</span>
+                <strong><b>{String(selectedPad + 1).padStart(2, '0')}</b> {selected.shortName}</strong>
+              </div>
+              <label className="pad-volume-control" htmlFor={`selected-pad-volume-${selected.id}`}>
+                <span>{selected.volume === 0 ? 'MUTED' : 'PAD GAIN'}</span>
+                <input
+                  id={`selected-pad-volume-${selected.id}`}
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={selected.volume}
+                  style={{ background: `linear-gradient(90deg, var(--pad-accent) 0 ${selected.volume}%, #5f5a67 ${selected.volume}% 100%)` }}
+                  aria-label={`Volume for pad ${selectedPad + 1}, ${selected.name}`}
+                  aria-valuetext={selected.volume === 0 ? 'Muted' : `${selected.volume} percent`}
+                  onChange={(event) => changeSelectedPadVolume(Number(event.target.value))}
+                />
+              </label>
+              <output htmlFor={`selected-pad-volume-${selected.id}`} aria-live="polite">
+                {String(selected.volume).padStart(3, '0')}%
+              </output>
+            </section>
 
             <div className="sample-controls">
               <div className="control-group tune-group">
@@ -987,6 +1063,28 @@ function App() {
               <button className={recording ? 'recording' : ''} onClick={() => void toggleMicRecording()}><Mic size={15} /> {recording ? `STOP ${timeLabel(recordSeconds)}` : 'MIC SAMPLE'}</button>
               <button onClick={() => void resetFactoryPad()}><RotateCcw size={15} /> RESET PAD</button>
             </div>
+            <form className="url-sample-loader" aria-busy={urlLoading} onSubmit={(event) => void handleSampleUrlSubmit(event)}>
+              <label htmlFor="sample-url">
+                <span><Link2 size={13} /> SAMPLE URL → PAD {String(selectedPad + 1).padStart(2, '0')}</span>
+                <small id="sample-url-help">DIRECT AUDIO FILE • CORS REQUIRED</small>
+              </label>
+              <div className="url-sample-row">
+                <input
+                  id="sample-url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  spellCheck="false"
+                  value={sampleUrl}
+                  placeholder="https://…/sample.wav"
+                  aria-describedby="sample-url-help"
+                  onChange={(event) => setSampleUrl(event.target.value)}
+                />
+                <button type="submit" disabled={urlLoading || !sampleUrl.trim()}>
+                  <Download size={14} /> {urlLoading ? 'FETCHING' : 'LOAD URL'}
+                </button>
+              </div>
+            </form>
             <p className="keyboard-hint">KEYS: Z X C V • A S D F • Q W E R • 1 2 3 4</p>
           </section>
         </div>

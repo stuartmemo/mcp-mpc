@@ -6,9 +6,9 @@ A local-first, SNES-inspired web sampling workstation. Built for the WebMCP Chal
 
 - 16 playable velocity-sensitive pads with keyboard shortcuts
 - Four switchable 16-pad sample kits
-- Per-pad pitch, start, and end controls
-- Shared pad/sample output volume with mute at 0%
-- Load or drag in audio, or record from a microphone/line input
+- Per-pad volume, pitch, start, and end controls
+- Independent master output level with mute at 0%
+- Load, drag, or fetch audio from a direct URL, or record from a microphone/line input
 - Automatic 2, 4, 8, or 16-slice sample chopping across pads
 - Audio-clocked 16-step sequencer with tempo, swing, and live record
 - General MIDI drum-file import with 1/16 quantization
@@ -32,7 +32,7 @@ A S D F
 Z X C V
 ```
 
-Press Space to start or stop the sequence. Audio files can also be dropped anywhere on the page; they load into the currently selected pad.
+Press Space to start or stop the sequence. Audio files can also be dropped anywhere on the page; they load into the currently selected pad. To fetch a sample, paste its direct audio-file URL into **Sample URL** below the pads. Cross-origin hosts must allow CORS requests.
 
 ## Production build
 
@@ -59,4 +59,4 @@ Changing the sound cartridge replaces the 16 factory pad assignments while prese
 
 ## WebMCP
 
-In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `hip-hop`, `traditional`, `dusty-crate`, or `lofi-acoustic`; `mcpmpc_set_volume` changes the shared pad/sample output level, and `mcpmpc_get_state` reports both settings.
+In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `hip-hop`, `traditional`, `dusty-crate`, or `lofi-acoustic`; `mcpmpc_configure_pad` changes one pad's level through its `volume` field, `mcpmpc_set_volume` changes the master output, and `mcpmpc_get_state` reports both settings.

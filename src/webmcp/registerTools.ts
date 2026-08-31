@@ -15,6 +15,7 @@ export type AssignPadInput = {
 export type ConfigurePadInput = {
   pad: number;
   pitch?: number;
+  volume?: number;
   sliceStart?: number;
   sliceEnd?: number;
   name?: string;
@@ -163,7 +164,7 @@ export async function registerMcpMpcTools(
     {
       name: 'mcpmpc_get_state',
       title: 'Inspect MCP-MPC',
-      description: 'Read the current MCP-MPC pads, sample assignments, trims, pitches, output volume, sequence, tempo, swing, and transport state. Pad and step numbers are 1-based.',
+      description: 'Read the current MCP-MPC pads, sample assignments, trims, pitches, per-pad levels, master output volume, sequence, tempo, swing, and transport state. Pad and step numbers are 1-based.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -229,7 +230,7 @@ export async function registerMcpMpcTools(
     {
       name: 'mcpmpc_assign_pad',
       title: 'Copy sample to pad',
-      description: 'Copy a sample assignment, including its current pitch and trim, from one pad to another pad.',
+      description: 'Copy a sample assignment, including its current pitch, level, and trim, from one pad to another pad.',
       inputSchema: {
         type: 'object',
         properties: { sourcePad: PAD_SCHEMA, targetPad: PAD_SCHEMA },
@@ -248,12 +249,13 @@ export async function registerMcpMpcTools(
     {
       name: 'mcpmpc_configure_pad',
       title: 'Configure pad',
-      description: 'Change a pad pitch, sample start/end trim, or display names. Pitch is measured in semitones and trim positions are normalized from 0 to 1.',
+      description: 'Change one pad\'s pitch, volume, sample start/end trim, or display names. Pitch is measured in semitones, volume is a percentage, and trim positions are normalized from 0 to 1.',
       inputSchema: {
         type: 'object',
         properties: {
           pad: PAD_SCHEMA,
           pitch: { type: 'number', minimum: -24, maximum: 24 },
+          volume: { type: 'number', minimum: 0, maximum: 100, description: 'Level for only this pad, as a percentage.' },
           sliceStart: { type: 'number', minimum: 0, maximum: 0.999 },
           sliceEnd: { type: 'number', minimum: 0.001, maximum: 1 },
           name: { type: 'string', minLength: 1, maxLength: 24 },
@@ -263,10 +265,11 @@ export async function registerMcpMpcTools(
         additionalProperties: false,
       },
       execute: executeSafely((input) => {
-        rejectUnknownKeys(input, ['pad', 'pitch', 'sliceStart', 'sliceEnd', 'name', 'shortName']);
+        rejectUnknownKeys(input, ['pad', 'pitch', 'volume', 'sliceStart', 'sliceEnd', 'name', 'shortName']);
         const configuration: ConfigurePadInput = {
           pad: padField(input, 'pad')!,
           pitch: numberField(input, 'pitch', -24, 24),
+          volume: numberField(input, 'volume', 0, 100),
           sliceStart: numberField(input, 'sliceStart', 0, 0.999),
           sliceEnd: numberField(input, 'sliceEnd', 0.001, 1),
           name: stringField(input, 'name', 24),
@@ -395,12 +398,12 @@ export async function registerMcpMpcTools(
     },
     {
       name: 'mcpmpc_set_volume',
-      title: 'Set pad volume',
-      description: 'Set the shared output level for every pad and sample, including live hits, the sequencer, chops, loaded audio, and WebMCP-triggered playback. Use 0 to mute or 100 for full level.',
+      title: 'Set master volume',
+      description: 'Set the master output level shared by every pad and sample. To change one pad only, use mcpmpc_configure_pad with its volume field. Use 0 to mute or 100 for full level.',
       inputSchema: {
         type: 'object',
         properties: {
-          volume: { type: 'number', minimum: 0, maximum: 100, description: 'Master pad and sample output level as a percentage.' },
+          volume: { type: 'number', minimum: 0, maximum: 100, description: 'Master output level as a percentage.' },
         },
         required: ['volume'],
         additionalProperties: false,
@@ -409,7 +412,7 @@ export async function registerMcpMpcTools(
         rejectUnknownKeys(input, ['volume']);
         const volume = numberField(input, 'volume', 0, 100, true)!;
         const result = controller.setVolume({ volume });
-        return response(`Set the pad output volume to ${Math.round(volume)} percent.`, result);
+        return response(`Set the master output volume to ${Math.round(volume)} percent.`, result);
       }),
     },
     {
