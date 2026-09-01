@@ -1,12 +1,24 @@
 export type PlayablePad = {
+  id: number;
   bufferId: string;
   pitch: number;
   volume: number;
   sliceStart: number;
   sliceEnd: number;
+  chokeGroup?: string;
 };
 
 const PAD_RELEASE_SECONDS = 0.008;
+const PAD_CHOKE_SECONDS = 0.008;
+
+type ActiveVoice = {
+  padId: number;
+  chokeGroup?: string;
+  source: AudioBufferSourceNode;
+  gain: GainNode;
+  startTime: number;
+  endTime: number;
+};
 
 export class AudioEngine {
   private context: AudioContext | null = null;
@@ -15,6 +27,7 @@ export class AudioEngine {
   private outputLevel = 0.88;
   private buffers = new Map<string, AudioBuffer>();
   private loading = new Map<string, Promise<AudioBuffer>>();
+  private activeVoices = new Set<ActiveVoice>();
 
   async activate() {
     if (!this.context) {
@@ -77,6 +90,22 @@ export class AudioEngine {
     return this.buffers.get(id);
   }
 
+  private voicesConflict(voice: ActiveVoice, pad: PlayablePad) {
+    return voice.padId === pad.id
+      || Boolean(voice.chokeGroup && voice.chokeGroup === pad.chokeGroup);
+  }
+
+  private chokeVoice(voice: ActiveVoice, at: number) {
+    const chokeAt = Math.max(voice.startTime, at);
+    if (chokeAt >= voice.endTime) return;
+
+    const chokeEnd = Math.min(voice.endTime, chokeAt + PAD_CHOKE_SECONDS);
+    voice.gain.gain.cancelAndHoldAtTime(chokeAt);
+    voice.gain.gain.exponentialRampToValueAtTime(0.0001, chokeEnd);
+    voice.source.stop(chokeEnd);
+    voice.endTime = chokeEnd;
+  }
+
   play(pad: PlayablePad, when = this.currentTime, velocity = 1) {
     const context = this.context;
     const compressor = this.compressor;
@@ -92,14 +121,37 @@ export class AudioEngine {
     const end = Math.max(pad.sliceStart + 0.001, Math.min(1, pad.sliceEnd)) * buffer.duration;
     source.buffer = buffer;
     source.playbackRate.value = 2 ** (pad.pitch / 12);
+    const startTime = Math.max(when, context.currentTime);
     const playbackDuration = (end - start) / source.playbackRate.value;
     const releaseDuration = Math.min(PAD_RELEASE_SECONDS, playbackDuration);
-    const releaseStart = when + playbackDuration - releaseDuration;
-    gain.gain.setValueAtTime(level, when);
+    const releaseStart = startTime + playbackDuration - releaseDuration;
+    const naturalEndTime = startTime + playbackDuration;
+    gain.gain.setValueAtTime(level, startTime);
     gain.gain.setValueAtTime(level, releaseStart);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + playbackDuration);
+    gain.gain.exponentialRampToValueAtTime(0.0001, naturalEndTime);
     source.connect(gain).connect(compressor);
-    source.start(when, start, end - start);
+
+    const conflictingVoices = Array.from(this.activeVoices)
+      .filter((voice) => this.voicesConflict(voice, pad));
+    const nextConflictTime = conflictingVoices
+      .filter((voice) => voice.startTime > startTime && voice.startTime < naturalEndTime)
+      .reduce((earliest, voice) => Math.min(earliest, voice.startTime), Number.POSITIVE_INFINITY);
+    const voice: ActiveVoice = {
+      padId: pad.id,
+      chokeGroup: pad.chokeGroup,
+      source,
+      gain,
+      startTime,
+      endTime: naturalEndTime,
+    };
+    source.onended = () => this.activeVoices.delete(voice);
+    source.start(startTime, start, end - start);
+    this.activeVoices.add(voice);
+
+    conflictingVoices
+      .filter((active) => active.startTime <= startTime && active.endTime > startTime)
+      .forEach((active) => this.chokeVoice(active, startTime));
+    if (Number.isFinite(nextConflictTime)) this.chokeVoice(voice, nextConflictTime);
     return true;
   }
 }
