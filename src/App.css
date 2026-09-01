@@ -527,7 +527,8 @@
 .tune-control output { color: var(--ink); font-size: 13px; text-align: center; }
 
 .trim-group { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-.trim-group label { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 8px; color: #5c5664; font-size: 6px; }
+.trim-group label { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; color: #5c5664; font-size: 6px; }
+.trim-group output { display: block; margin-top: 5px; color: var(--ink); font-family: 'VT323', monospace; font-size: 13px; line-height: 1; }
 
 input[type='range'] {
   width: 100%;

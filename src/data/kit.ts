@@ -1,5 +1,4 @@
 export type PadColor = 'coral' | 'violet' | 'mint' | 'gold';
-export type PadChokeGroup = 'hats';
 
 export type KitId = 'hip-hop' | 'traditional' | 'dusty-crate' | 'lofi-acoustic';
 
@@ -15,7 +14,6 @@ export type PadConfig = {
   volume: number;
   sliceStart: number;
   sliceEnd: number;
-  chokeGroup?: PadChokeGroup;
   color: PadColor;
   source: 'kit' | 'sample' | 'chop';
 };
@@ -27,7 +25,6 @@ type PadDefinition = readonly [
   midi: number,
   filename: string,
   color: PadColor,
-  chokeGroup?: PadChokeGroup,
 ];
 
 export type KitDefinition = {
@@ -42,11 +39,11 @@ const hipHopPads = [
   ['HARD KICK', 'KICK', 'z', 36, 'kick.wav', 'coral'],
   ['CRACK SNARE', 'SNARE', 'x', 38, 'snare.wav', 'coral'],
   ['SNARE STACK', 'STACK', 'c', 39, 'snare-stack.wav', 'coral'],
-  ['TIGHT HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral', 'hats'],
-  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold', 'hats'],
+  ['TIGHT HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral'],
+  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold'],
   ['DEEP KICK', 'D.KIK', 's', 41, 'deep-kick.wav', 'gold'],
   ['LOW TOM', 'L.TOM', 'd', 45, 'low-tom.wav', 'gold'],
-  ['PEDAL HAT', 'P.HH', 'f', 54, 'pedal-hat.wav', 'gold', 'hats'],
+  ['PEDAL HAT', 'P.HH', 'f', 54, 'pedal-hat.wav', 'gold'],
   ['RIM CLICK', 'RIM', 'q', 37, 'rim.wav', 'mint'],
   ['RIDE BELL', 'BELL', 'w', 56, 'ride-bell.wav', 'mint'],
   ['HIGH TOM', 'H.TOM', 'e', 70, 'high-tom.wav', 'mint'],
@@ -61,13 +58,13 @@ const traditionalPads = [
   ['ACOUSTIC KICK', 'KICK', 'z', 36, 'kick.wav', 'coral'],
   ['ACOUSTIC SNARE', 'SNARE', 'x', 38, 'snare.wav', 'coral'],
   ['GHOST SNARE', 'GHST', 'c', 40, 'ghost-snare.wav', 'coral'],
-  ['CLOSED HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral', 'hats'],
-  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold', 'hats'],
+  ['CLOSED HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral'],
+  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold'],
   ['FLOOR TOM', 'F.TOM', 's', 41, 'floor-tom.wav', 'gold'],
   ['RACK TOM', 'R.TOM', 'd', 48, 'rack-tom.wav', 'gold'],
-  ['PEDAL HAT', 'P.HH', 'f', 44, 'pedal-hat.wav', 'gold', 'hats'],
+  ['PEDAL HAT', 'P.HH', 'f', 44, 'pedal-hat.wav', 'gold'],
   ['CROSS STICK', 'X.STK', 'q', 37, 'cross-stick.wav', 'mint'],
-  ['HALF-OPEN HAT', 'H.HH', 'w', 22, 'half-open-hat.wav', 'mint', 'hats'],
+  ['HALF-OPEN HAT', 'H.HH', 'w', 22, 'half-open-hat.wav', 'mint'],
   ['RIDE BOW', 'RIDE', 'e', 51, 'ride.wav', 'mint'],
   ['RIDE BELL', 'BELL', 'r', 53, 'ride-bell.wav', 'mint'],
   ['CRASH 1', 'CRSH1', '1', 49, 'crash.wav', 'violet'],
@@ -80,8 +77,8 @@ const dustyCratePads = [
   ['ROUND KICK', 'R.KIK', 'z', 36, 'kick.wav', 'coral'],
   ['DUST SNARE', 'D.SNR', 'x', 38, 'snare.wav', 'coral'],
   ['HAND CLAP', 'CLAP', 'c', 39, 'clap.wav', 'coral'],
-  ['CLOSED HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral', 'hats'],
-  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold', 'hats'],
+  ['CLOSED HAT', 'C.HH', 'v', 42, 'closed-hat.wav', 'coral'],
+  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold'],
   ['LOW TOM', 'L.TOM', 's', 41, 'low-tom.wav', 'gold'],
   ['CONGA', 'CONGA', 'd', 45, 'conga.wav', 'gold'],
   ['TAMBOURINE', 'TAMB', 'f', 50, 'tambourine.wav', 'gold'],
@@ -99,17 +96,17 @@ const lofiAcousticPads = [
   ['TAPE KICK', 'KICK', 'z', 36, 'kick.wav', 'coral'],
   ['ROOM SNARE', 'SNAR', 'x', 38, 'snare.wav', 'coral'],
   ['GHOST NOTE', 'GHST', 'c', 40, 'ghost-snare.wav', 'coral'],
-  ['HAT TIP', 'H.TIP', 'v', 42, 'hat-tip.wav', 'coral', 'hats'],
-  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold', 'hats'],
+  ['HAT TIP', 'H.TIP', 'v', 42, 'hat-tip.wav', 'coral'],
+  ['OPEN HAT', 'O.HH', 'a', 46, 'open-hat.wav', 'gold'],
   ['FLOOR TOM', 'F.TOM', 's', 41, 'floor-tom.wav', 'gold'],
   ['RACK TOM', 'R.TOM', 'd', 48, 'rack-tom.wav', 'gold'],
-  ['PEDAL HAT', 'P.HH', 'f', 44, 'pedal-hat.wav', 'gold', 'hats'],
+  ['PEDAL HAT', 'P.HH', 'f', 44, 'pedal-hat.wav', 'gold'],
   ['CROSS STICK', 'X.STK', 'q', 37, 'cross-stick.wav', 'mint'],
-  ['HAT EDGE', 'H.EDG', 'w', 22, 'hat-edge.wav', 'mint', 'hats'],
+  ['HAT EDGE', 'H.EDG', 'w', 22, 'hat-edge.wav', 'mint'],
   ['RIDE BOW', 'RIDE', 'e', 51, 'ride.wav', 'mint'],
   ['RIDE BELL', 'BELL', 'r', 53, 'ride-bell.wav', 'mint'],
   ['DARK CRASH', 'CRSH', '1', 49, 'crash.wav', 'violet'],
-  ['HAT SPLASH', 'SPLH', '2', 55, 'splash.wav', 'violet', 'hats'],
+  ['HAT SPLASH', 'SPLH', '2', 55, 'splash.wav', 'violet'],
   ['RIMSHOT', 'RIM', '3', 39, 'rimshot.wav', 'violet'],
   ['SOFT KICK', 'S.KIK', '4', 35, 'soft-kick.wav', 'violet'],
 ] as const satisfies readonly PadDefinition[];
@@ -172,7 +169,6 @@ export const createFactoryKit = (kitId: KitId = DEFAULT_KIT_ID): PadConfig[] => 
     volume: 100,
     sliceStart: 0,
     sliceEnd: 1,
-    chokeGroup: definition[6],
     color: definition[5],
     source: 'kit',
   }));

@@ -5,15 +5,13 @@ export type PlayablePad = {
   volume: number;
   sliceStart: number;
   sliceEnd: number;
-  chokeGroup?: string;
 };
 
 const PAD_RELEASE_SECONDS = 0.008;
-const PAD_CHOKE_SECONDS = 0.008;
+const PAD_RETRIGGER_SECONDS = 0.008;
 
 type ActiveVoice = {
   padId: number;
-  chokeGroup?: string;
   source: AudioBufferSourceNode;
   gain: GainNode;
   startTime: number;
@@ -90,20 +88,15 @@ export class AudioEngine {
     return this.buffers.get(id);
   }
 
-  private voicesConflict(voice: ActiveVoice, pad: PlayablePad) {
-    return voice.padId === pad.id
-      || Boolean(voice.chokeGroup && voice.chokeGroup === pad.chokeGroup);
-  }
+  private releaseVoice(voice: ActiveVoice, at: number) {
+    const releaseAt = Math.max(voice.startTime, at);
+    if (releaseAt >= voice.endTime) return;
 
-  private chokeVoice(voice: ActiveVoice, at: number) {
-    const chokeAt = Math.max(voice.startTime, at);
-    if (chokeAt >= voice.endTime) return;
-
-    const chokeEnd = Math.min(voice.endTime, chokeAt + PAD_CHOKE_SECONDS);
-    voice.gain.gain.cancelAndHoldAtTime(chokeAt);
-    voice.gain.gain.exponentialRampToValueAtTime(0.0001, chokeEnd);
-    voice.source.stop(chokeEnd);
-    voice.endTime = chokeEnd;
+    const releaseEnd = Math.min(voice.endTime, releaseAt + PAD_RETRIGGER_SECONDS);
+    voice.gain.gain.cancelAndHoldAtTime(releaseAt);
+    voice.gain.gain.exponentialRampToValueAtTime(0.0001, releaseEnd);
+    voice.source.stop(releaseEnd);
+    voice.endTime = releaseEnd;
   }
 
   play(pad: PlayablePad, when = this.currentTime, velocity = 1) {
@@ -132,13 +125,12 @@ export class AudioEngine {
     source.connect(gain).connect(compressor);
 
     const conflictingVoices = Array.from(this.activeVoices)
-      .filter((voice) => this.voicesConflict(voice, pad));
+      .filter((voice) => voice.padId === pad.id);
     const nextConflictTime = conflictingVoices
       .filter((voice) => voice.startTime > startTime && voice.startTime < naturalEndTime)
       .reduce((earliest, voice) => Math.min(earliest, voice.startTime), Number.POSITIVE_INFINITY);
     const voice: ActiveVoice = {
       padId: pad.id,
-      chokeGroup: pad.chokeGroup,
       source,
       gain,
       startTime,
@@ -150,8 +142,8 @@ export class AudioEngine {
 
     conflictingVoices
       .filter((active) => active.startTime <= startTime && active.endTime > startTime)
-      .forEach((active) => this.chokeVoice(active, startTime));
-    if (Number.isFinite(nextConflictTime)) this.chokeVoice(voice, nextConflictTime);
+      .forEach((active) => this.releaseVoice(active, startTime));
+    if (Number.isFinite(nextConflictTime)) this.releaseVoice(voice, nextConflictTime);
     return true;
   }
 }

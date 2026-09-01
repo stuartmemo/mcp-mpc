@@ -55,6 +55,11 @@ function makeStarterPattern(): Pattern {
 const clonePattern = (pattern: Pattern) => pattern.map((row) => [...row]);
 
 const timeLabel = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+const SLICE_STEP = 0.001;
+
+const slicePositionLabel = (position: number, duration?: number) => duration
+  ? `${(position * duration).toFixed(3)}s`
+  : `${(position * 100).toFixed(1)}%`;
 
 const resolveSampleUrl = (rawUrl: string) => {
   const trimmedUrl = rawUrl.trim();
@@ -166,6 +171,7 @@ function App() {
 
   const selected = pads[selectedPad];
   const selectedBuffer = audio.getBuffer(selected.bufferId);
+  const selectedDuration = selectedBuffer?.duration;
 
   const powerOn = useCallback(async () => {
     if (poweredRef.current) {
@@ -1002,8 +1008,32 @@ function App() {
                 </div>
               </div>
               <div className="control-group trim-group">
-                <label><span>START</span><input type="range" min="0" max="0.95" step="0.01" value={selected.sliceStart} onChange={(event) => updateSelectedPad({ sliceStart: Math.min(Number(event.target.value), selected.sliceEnd - 0.01) })} /></label>
-                <label><span>END</span><input type="range" min="0.05" max="1" step="0.01" value={selected.sliceEnd} onChange={(event) => updateSelectedPad({ sliceEnd: Math.max(Number(event.target.value), selected.sliceStart + 0.01) })} /></label>
+                <label>
+                  <span>START<output>{slicePositionLabel(selected.sliceStart, selectedDuration)}</output></span>
+                  <input
+                    type="range"
+                    min="0"
+                    max={1 - SLICE_STEP}
+                    step={SLICE_STEP}
+                    value={selected.sliceStart}
+                    aria-label={`Start point for ${selected.name}`}
+                    aria-valuetext={slicePositionLabel(selected.sliceStart, selectedDuration)}
+                    onChange={(event) => updateSelectedPad({ sliceStart: Math.min(Number(event.target.value), selected.sliceEnd - SLICE_STEP) })}
+                  />
+                </label>
+                <label>
+                  <span>END<output>{slicePositionLabel(selected.sliceEnd, selectedDuration)}</output></span>
+                  <input
+                    type="range"
+                    min={SLICE_STEP}
+                    max="1"
+                    step={SLICE_STEP}
+                    value={selected.sliceEnd}
+                    aria-label={`End point for ${selected.name}`}
+                    aria-valuetext={slicePositionLabel(selected.sliceEnd, selectedDuration)}
+                    onChange={(event) => updateSelectedPad({ sliceEnd: Math.max(Number(event.target.value), selected.sliceStart + SLICE_STEP) })}
+                  />
+                </label>
               </div>
               <div className="control-group chop-group">
                 <span className="control-label">AUTO CHOP</span>
