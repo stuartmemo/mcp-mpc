@@ -187,7 +187,7 @@ export async function registerMcpMpcTools(
           kit: {
             type: 'string',
             enum: KIT_IDS,
-            description: 'Factory kit identifier. Hip-Hop is a recorded boom-bap palette; Traditional is a clean recorded acoustic set; Dusty Crate and Lo-Fi Acoustic are the character palettes.',
+            description: 'Factory kit identifier. Fischer 808 is classic analog; Uzu is modern electronic; Big Rusty is a roomy acoustic kit; Swirly is a brushed hand-percussion palette.',
           },
         },
         required: ['kit'],

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "generate:samples": "node scripts/generate-samples.mjs && node scripts/import-acoustic-kit.mjs",
+    "generate:samples": "node scripts/import-factory-kits.mjs",
     "verify:samples": "node scripts/verify-samples.mjs",
     "lint": "oxlint",
     "preview": "vite preview"

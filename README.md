@@ -45,9 +45,9 @@ The generated app is static and can be deployed on any static host. Microphone r
 
 ## Built-in kits
 
-**Hip-Hop** is the default: real acoustic drum recordings pitched, stacked, shortened, and saturated into a tight boom-bap palette with hard and deep kicks, crack and room snares, crisp hats, toms, and fills. **Traditional Kit** is a clean acoustic set with close-miked kick and snare blended with natural mid and overhead microphones, plus toms, expressive hats, ride, and two crashes.
+**Fischer 808** is the default: a 16-voice selection from Michael Fischer's direct capture of a real TR-808, including the classic drums plus congas, cowbell, claves, and maracas. **Uzu Modern** supplies punchier synthesized and analog-processed electronics with modular character hits.
 
-**Dusty Crate** remains available for warm modeled drums and organic percussion, while **Lo-Fi Acoustic** keeps the softer vintage-mic jazz palette. Dusty Crate uses original deterministic 22.05 kHz mono synthesis. Hip-Hop, Traditional Kit, and Lo-Fi Acoustic use real CC0 recordings from [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums), pinned to a specific revision and processed into compact MPC-style one-shots. Full source mappings, mix weights, processing notes, and checksums live in `public/samples/manifest.json` and each recorded kit's `PROVENANCE.md`.
+**Big Rusty Room** is a room-forward vintage acoustic kit with a 24-inch kick, four oversized toms, and unusual cymbals. **Swirly Brushes** is the left-field organic cartridge: brushed snare and cajon, hand drums, snare buzz, and cracked metal. The recordings come from [Fischer's TR-808 set](https://github.com/tidalcycles/sounds-tr808-fischer), [uzu-drumkit](https://github.com/tidalcycles/uzu-drumkit), [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums), and [Swirly Drums](https://github.com/sfzinstruments/karoryfer.swirly-drums). All four sources use CC0 or an equivalent public-domain dedication, and every source revision is pinned. Full licenses, source mappings, processing notes, and source/output checksums live under `public/samples/`.
 
 Rebuild all four kits with Node.js and `ffmpeg` available on `PATH`:
 
@@ -59,4 +59,4 @@ Changing the sound cartridge replaces the 16 factory pad assignments while prese
 
 ## WebMCP
 
-In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `hip-hop`, `traditional`, `dusty-crate`, or `lofi-acoustic`; `mcpmpc_configure_pad` changes one pad's level through its `volume` field, `mcpmpc_set_volume` changes the master output, and `mcpmpc_get_state` reports both settings.
+In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `fischer-808`, `uzu`, `big-rusty`, or `swirly`; `mcpmpc_configure_pad` changes one pad's level through its `volume` field, `mcpmpc_set_volume` changes the master output, and `mcpmpc_get_state` reports both settings.

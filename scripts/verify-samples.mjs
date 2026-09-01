@@ -7,17 +7,21 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const samplesRoot = join(root, 'public', 'samples');
 const manifest = JSON.parse(readFileSync(join(samplesRoot, 'manifest.json'), 'utf8'));
-const expectedKitIds = ['hip-hop', 'traditional', 'dusty-crate', 'lofi-acoustic'];
+const expectedKitIds = ['fischer-808', 'uzu', 'big-rusty', 'swirly'];
 
 assert.deepEqual(
   manifest.kits.map((kit) => kit.id),
   expectedKitIds,
   'Sample manifest kit order or membership does not match the app.',
 );
-assert.equal(
-  manifest.kits.find((kit) => kit.id === 'hip-hop')?.kind,
-  'recorded',
-  'Hip-Hop must remain a recorded, sample-based kit.',
+assert.equal(manifest.generatedBy, 'scripts/import-factory-kits.mjs');
+assert.deepEqual(
+  readdirSync(samplesRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort(),
+  [...expectedKitIds].sort(),
+  'The sample tree contains a missing or retired factory kit directory.',
 );
 
 let verifiedFiles = 0;
@@ -30,11 +34,13 @@ for (const kit of manifest.kits) {
   assert.deepEqual(diskFiles, [...kit.files].sort(), `${kit.id} manifest and directory disagree.`);
 
   const provenance = new Map((kit.provenance ?? []).map((entry) => [entry.file, entry.sha256]));
-  if (kit.kind === 'recorded') {
-    assert.equal(provenance.size, 16, `${kit.id} must record provenance for all 16 samples.`);
-    assert.equal(readFileSync(join(directory, 'LICENSE-CC0.txt'), 'utf8').length > 100, true);
-    assert.equal(readFileSync(join(directory, 'PROVENANCE.md'), 'utf8').length > 500, true);
-  }
+  assert.equal(kit.kind, 'recorded', `${kit.id} must be a recorded, sample-based kit.`);
+  assert.equal(provenance.size, 16, `${kit.id} must record provenance for all 16 samples.`);
+  const license = readFileSync(join(directory, 'LICENSE.txt'));
+  assert.ok(license.length > 100, `${kit.id} must include its upstream license.`);
+  assert.equal(createHash('sha256').update(license).digest('hex'), kit.licenseSha256);
+  assert.ok(readFileSync(join(directory, 'PROVENANCE.md'), 'utf8').length > 500);
+  assert.match(kit.source?.revision ?? '', /^[a-f0-9]{40}$/);
 
   for (const filename of kit.files) {
     const wav = readFileSync(join(directory, filename));
@@ -54,10 +60,11 @@ for (const kit of manifest.kits) {
     }
     assert.ok(peak >= 8_000, `${kit.id}/${filename} is silent or unexpectedly quiet.`);
 
-    if (provenance.has(filename)) {
-      const digest = createHash('sha256').update(wav).digest('hex');
-      assert.equal(digest, provenance.get(filename), `${kit.id}/${filename} checksum does not match provenance.`);
-    }
+    const entry = (kit.provenance ?? []).find((item) => item.file === filename);
+    assert.equal(entry?.sourceFiles?.length, 1, `${kit.id}/${filename} must identify one upstream recording.`);
+    assert.match(entry?.sourceFiles?.[0]?.sha256 ?? '', /^[a-f0-9]{64}$/);
+    const digest = createHash('sha256').update(wav).digest('hex');
+    assert.equal(digest, provenance.get(filename), `${kit.id}/${filename} checksum does not match provenance.`);
     verifiedFiles += 1;
   }
 }
