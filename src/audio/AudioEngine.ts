@@ -6,6 +6,8 @@ export type PlayablePad = {
   sliceEnd: number;
 };
 
+const PAD_RELEASE_SECONDS = 0.008;
+
 export class AudioEngine {
   private context: AudioContext | null = null;
   private output: GainNode | null = null;
@@ -90,8 +92,12 @@ export class AudioEngine {
     const end = Math.max(pad.sliceStart + 0.001, Math.min(1, pad.sliceEnd)) * buffer.duration;
     source.buffer = buffer;
     source.playbackRate.value = 2 ** (pad.pitch / 12);
+    const playbackDuration = (end - start) / source.playbackRate.value;
+    const releaseDuration = Math.min(PAD_RELEASE_SECONDS, playbackDuration);
+    const releaseStart = when + playbackDuration - releaseDuration;
     gain.gain.setValueAtTime(level, when);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.04, (end - start) / source.playbackRate.value));
+    gain.gain.setValueAtTime(level, releaseStart);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + playbackDuration);
     source.connect(gain).connect(compressor);
     source.start(when, start, end - start);
     return true;
