@@ -946,8 +946,8 @@ function App() {
       <section className={`machine ${powered ? 'is-powered' : ''}`} aria-label="MCP MPC sampler">
         <div className="machine-topbar">
           <div className="brand-block">
-            <span className="brand-mark">BC</span>
-            <div><strong>16-BIT SAMPLING WORKSTATION</strong><small>MADE IN THE BEDROOM</small></div>
+            <span className="brand-mark">OK</span>
+            <div><strong>16-BIT SAMPLING WORKSTATION</strong><small>A WEBMCP EXPERIENCE</small></div>
           </div>
           <div className="kit-selector">
             <label htmlFor="factory-kit">SOUND CARTRIDGE</label>
