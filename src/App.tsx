@@ -682,6 +682,8 @@ function App() {
           volumePercent: pad.volume,
           sliceStart: pad.sliceStart,
           sliceEnd: pad.sliceEnd,
+          startSeconds: buffer ? Number((pad.sliceStart * buffer.duration).toFixed(3)) : null,
+          endSeconds: buffer ? Number((pad.sliceEnd * buffer.duration).toFixed(3)) : null,
           loaded: Boolean(buffer),
           durationSeconds: buffer ? Number(buffer.duration.toFixed(3)) : null,
           keyboardKey: pad.key.toUpperCase(),
@@ -754,6 +756,43 @@ function App() {
         commitPads(next);
         selectedPadNow(padIndex);
         setStatus(`WEBMCP / PAD ${pad} CONFIGURED`);
+        return stateSnapshot();
+      },
+
+      setSampleRange: async ({ pad, startSeconds, endSeconds }, signal) => {
+        const padIndex = pad - 1;
+        const current = await ensurePadBuffer(padIndex, signal);
+        const buffer = audio.getBuffer(current.bufferId);
+        if (!buffer) throw new Error(`Pad ${pad} has no playable sample loaded.`);
+
+        const duration = buffer.duration;
+        const reportedDuration = Number(duration.toFixed(3));
+        const maximumAcceptedEnd = Math.max(duration, reportedDuration);
+        if (startSeconds !== undefined && startSeconds >= duration) {
+          throw new Error(`startSeconds must be lower than the sample duration of ${reportedDuration} seconds.`);
+        }
+        if (endSeconds !== undefined && endSeconds > maximumAcceptedEnd) {
+          throw new Error(`endSeconds cannot exceed the sample duration of ${reportedDuration} seconds.`);
+        }
+
+        const nextStartSeconds = startSeconds ?? current.sliceStart * duration;
+        const nextEndSeconds = Math.min(endSeconds ?? current.sliceEnd * duration, duration);
+        if (nextStartSeconds >= nextEndSeconds) {
+          throw new Error('startSeconds must be lower than endSeconds.');
+        }
+        const minimumRangeSeconds = duration * SLICE_STEP;
+        if (nextEndSeconds - nextStartSeconds < minimumRangeSeconds) {
+          throw new Error(`startSeconds and endSeconds must be at least ${minimumRangeSeconds.toFixed(3)} seconds apart.`);
+        }
+
+        const next = padsRef.current.map((candidate, index) => index === padIndex ? {
+          ...candidate,
+          sliceStart: nextStartSeconds / duration,
+          sliceEnd: nextEndSeconds / duration,
+        } : candidate);
+        commitPads(next);
+        selectedPadNow(padIndex);
+        setStatus(`WEBMCP / PAD ${pad} RANGE ${nextStartSeconds.toFixed(3)}-${nextEndSeconds.toFixed(3)}S`);
         return stateSnapshot();
       },
 

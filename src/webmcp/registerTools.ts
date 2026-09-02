@@ -22,6 +22,12 @@ export type ConfigurePadInput = {
   shortName?: string;
 };
 
+export type SetSampleRangeInput = {
+  pad: number;
+  startSeconds?: number;
+  endSeconds?: number;
+};
+
 export type ChopSampleInput = {
   sourcePad: number;
   count: 2 | 4 | 8 | 16;
@@ -68,6 +74,7 @@ export type McpMpcController = {
   loadSample: (input: LoadSampleInput, signal: AbortSignal) => Promise<unknown>;
   assignPad: (input: AssignPadInput, signal: AbortSignal) => Promise<unknown>;
   configurePad: (input: ConfigurePadInput) => unknown;
+  setSampleRange: (input: SetSampleRangeInput, signal: AbortSignal) => Promise<unknown>;
   chopSample: (input: ChopSampleInput, signal: AbortSignal) => Promise<unknown>;
   createSequence: (input: CreateSequenceInput) => unknown;
   playPad: (input: PlayPadInput) => Promise<unknown>;
@@ -164,7 +171,7 @@ export async function registerMcpMpcTools(
     {
       name: 'mcpmpc_get_state',
       title: 'Inspect MCP-MPC',
-      description: 'Read the current MCP-MPC pads, sample assignments, trims, pitches, per-pad levels, master output volume, sequence, tempo, swing, and transport state. Pad and step numbers are 1-based.',
+      description: 'Read the current MCP-MPC pads, sample assignments, normalized trims, loaded-sample start/end times and durations, pitches, per-pad levels, master output volume, sequence, tempo, swing, and transport state. Pad and step numbers are 1-based.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -249,7 +256,7 @@ export async function registerMcpMpcTools(
     {
       name: 'mcpmpc_configure_pad',
       title: 'Configure pad',
-      description: 'Change one pad\'s pitch, volume, sample start/end trim, or display names. Pitch is measured in semitones, volume is a percentage, and trim positions are normalized from 0 to 1.',
+      description: 'Change one pad\'s pitch, volume, normalized sample trim, or display names. Pitch is measured in semitones, volume is a percentage, and trim positions are normalized from 0 to 1. For start/end times in seconds, use mcpmpc_set_sample_range.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -280,6 +287,41 @@ export async function registerMcpMpcTools(
         }
         const result = controller.configurePad(configuration);
         return response(`Configured pad ${configuration.pad}.`, result);
+      }),
+    },
+    {
+      name: 'mcpmpc_set_sample_range',
+      title: 'Set sample start and end',
+      description: 'Set the playable start and/or end time, in seconds, for the sample assigned to one pad. Omit either boundary to keep its current value. Use mcpmpc_get_state to inspect the sample duration and current startSeconds/endSeconds.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          pad: PAD_SCHEMA,
+          startSeconds: { type: 'number', minimum: 0, description: 'Playable start time measured from the beginning of the source sample.' },
+          endSeconds: { type: 'number', exclusiveMinimum: 0, description: 'Playable end time measured from the beginning of the source sample.' },
+        },
+        required: ['pad'],
+        anyOf: [
+          { required: ['startSeconds'] },
+          { required: ['endSeconds'] },
+        ],
+        additionalProperties: false,
+      },
+      execute: executeSafely(async (input, toolSignal) => {
+        rejectUnknownKeys(input, ['pad', 'startSeconds', 'endSeconds']);
+        const range: SetSampleRangeInput = {
+          pad: padField(input, 'pad')!,
+          startSeconds: numberField(input, 'startSeconds', 0, Number.MAX_SAFE_INTEGER),
+          endSeconds: numberField(input, 'endSeconds', 0, Number.MAX_SAFE_INTEGER),
+        };
+        if (range.startSeconds === undefined && range.endSeconds === undefined) {
+          throw new Error('Provide startSeconds, endSeconds, or both.');
+        }
+        if (range.endSeconds !== undefined && range.endSeconds <= 0) {
+          throw new Error('endSeconds must be greater than 0.');
+        }
+        const result = await controller.setSampleRange(range, toolSignal);
+        return response(`Set the playable sample range for pad ${range.pad}.`, result);
       }),
     },
     {

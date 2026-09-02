@@ -59,4 +59,4 @@ Changing the sound cartridge replaces the 16 factory pad assignments while prese
 
 ## WebMCP
 
-In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `fischer-808`, `uzu`, `big-rusty`, or `swirly`; `mcpmpc_configure_pad` changes one pad's level through its `volume` field, `mcpmpc_set_volume` changes the master output, and `mcpmpc_get_state` reports both settings.
+In a WebMCP-capable browser, the page registers tools through `document.modelContext`. Alongside sample, pad, sequence, and transport controls, `mcpmpc_select_kit` accepts `fischer-808`, `uzu`, `big-rusty`, or `swirly`; `mcpmpc_configure_pad` changes one pad's level through its `volume` field; `mcpmpc_set_sample_range` changes a pad's playable `startSeconds` and/or `endSeconds`; `mcpmpc_set_volume` changes the master output; and `mcpmpc_get_state` reports those settings and each loaded sample's duration.

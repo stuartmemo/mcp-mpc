@@ -27,7 +27,7 @@ export class AudioEngine {
   private loading = new Map<string, Promise<AudioBuffer>>();
   private activeVoices = new Set<ActiveVoice>();
 
-  async activate() {
+  private ensureContext() {
     if (!this.context) {
       this.context = new AudioContext({ latencyHint: 'interactive' });
       this.output = this.context.createGain();
@@ -40,8 +40,13 @@ export class AudioEngine {
       this.compressor.release.value = 0.18;
       this.compressor.connect(this.output).connect(this.context.destination);
     }
-    if (this.context.state === 'suspended') await this.context.resume();
     return this.context;
+  }
+
+  async activate() {
+    const context = this.ensureContext();
+    if (context.state === 'suspended') await context.resume();
+    return context;
   }
 
   get currentTime() {
@@ -62,7 +67,7 @@ export class AudioEngine {
 
     const promise = (async () => {
       try {
-        const context = await this.activate();
+        const context = this.ensureContext();
         const response = await fetch(url, { signal });
         if (!response.ok) throw new Error(`Could not load sample: ${url}`);
         const buffer = await context.decodeAudioData(await response.arrayBuffer());
@@ -78,7 +83,7 @@ export class AudioEngine {
   }
 
   async loadFile(id: string, file: Blob) {
-    const context = await this.activate();
+    const context = this.ensureContext();
     const buffer = await context.decodeAudioData(await file.arrayBuffer());
     this.buffers.set(id, buffer);
     return buffer;
