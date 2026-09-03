@@ -934,7 +934,8 @@ function App() {
           <p className="header-intro">
             An MPC is a pad-based sampler for chopping sounds and building beats.
             <br />
-            The MPC reshaped hip-hop and electronic music by making sample-based production fast, tactile, and self-contained.
+            The MPC reshaped hip-hop and electronic music by making sample-based production fast, tactile, and self-contained. This is the{' '}
+            <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer">WebMCP</a> version.
           </p>
         </div>
         <div className="header-score" aria-label="Session information">

@@ -146,6 +146,19 @@
   text-shadow: 1px 1px 0 rgba(21, 21, 38, .7);
 }
 
+.header-intro a {
+  color: #f5c16f;
+  text-decoration-thickness: .08em;
+  text-underline-offset: .12em;
+}
+
+.header-intro a:hover { color: #fff3d2; }
+
+.header-intro a:focus-visible {
+  outline: 2px solid #f5c16f;
+  outline-offset: 3px;
+}
+
 .header-score {
   display: flex;
   gap: clamp(12px, 2.5vw, 34px);
